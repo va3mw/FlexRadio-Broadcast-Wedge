@@ -1,3 +1,4 @@
+
 """
 WARNING: USE AT YOUR OWN RISK
 
@@ -11,6 +12,31 @@ By using this script, you acknowledge and agree that you understand this warning
 and any use of the script is entirely at your own risk. Any damage caused by the 
 deployment or use of this script is the sole responsibility of the user, and the authors or 
 distributors of this script cannot be held liable for any adverse consequences arising therefrom.
+
+This script is not supported in anyway by FlexRadio Inc. 
+
+
+Here are the specific dependencies:
+
+Python Version:
+Python 3.x: Ensure Python 3 is installed. Python 2.x is not supported. You can download Python 3 from the official Python website.
+
+Standard Libraries: No installation of external packages is required as the script uses only built-in libraries, which include:
+
+socket: For creating network connections and sending data over these connections.
+subprocess: For running the ping command and capturing its output.
+time: For handling delays in the script execution.
+datetime: For generating timestamps.
+
+System Requirements
+Operating System: The script is designed for Windows. Commands and behaviors might differ on other operating systems.
+
+Network Permissions: Ensure that the script has the necessary permissions to execute network-related 
+commands, such as sending UDP packets and executing ping operations. Firewall and antivirus settings 
+may need to be adjusted to allow these operations.
+
+Written by ChatGPT4 - May 2024
+
 """
 
 import socket
