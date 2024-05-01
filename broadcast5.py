@@ -16,6 +16,7 @@ distributors of this script cannot be held liable for any adverse consequences a
 import socket
 import time
 import subprocess  # For executing a shell command
+import datetime    # For timestamping
 
 # Print the warning message on the screen
 print("""
@@ -42,9 +43,7 @@ if user_input != "YES":
     print("User did not acknowledge the risks. Exiting.")
     exit()
 
-# Variables that must be modified according to the desired configuration
-# Failure to do so will result in a nonworking solution
-
+# Variables that can be modified according to the desired configuration
 ip_address = '192.168.110.76'         # Target radio IP address
 callsign = 'VA3MW'                    # User's Callsign
 nickname = 'Flex6600'                 # Radio NickName
@@ -66,26 +65,19 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 # Set the option to enable broadcast
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 
-previous_ping_status = None
-
 try:
-    while True:  # Loop to continuously send messages and ping
-        # Send the message
-        sock.sendto(message, (broadcast_address, port))
-        print("Message sent!")
-
+    while True:
         # Ping the IP address
         response = subprocess.run(['ping', '-n', '1', ip_address], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        current_ping_status = 'successful' if response.returncode == 0 else 'not successful'
-
-        if previous_ping_status is None:
-            print(f"Initial ping was {current_ping_status}.")
-        elif previous_ping_status != current_ping_status:
-            print(f"Change in ping status detected: It was {previous_ping_status}, now it is {current_ping_status}.")
-
-        previous_ping_status = current_ping_status
-
-        time.sleep(11)  # Wait for 11 seconds before sending the next message and pinging again
+        if response.returncode == 0:
+            # Send the message if ping is successful
+            sock.sendto(message, (broadcast_address, port))
+            print("Message sent!")
+            time.sleep(11)  # Wait for 11 seconds before sending the next message and pinging again
+        else:
+            current_time = datetime.datetime.now().strftime("%H:%M:%S")
+            print(f"{current_time} - Ping failed, will retry in 10 seconds...")
+            time.sleep(10)  # Wait for 10 seconds before retrying the ping
 finally:
     # Ensure the socket is closed properly
     sock.close()
