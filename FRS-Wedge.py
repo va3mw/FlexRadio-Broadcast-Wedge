@@ -77,18 +77,18 @@ try:
         try:
             response = subprocess.run(['ping', ping_option, '1', ip_address], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             current_status = 'successful' if response.returncode == 0 else 'failed'
-            
+            current_time = datetime.datetime.now().strftime("%H:%M:%S")
+
             if current_status == 'successful':
                 message_text = f'discovery_protocol_version=3.0.0.2 model={model} serial={serial} version={version} nickname={nickname} callsign={callsign} ip={ip_address} port=4992 status=Available inuse_ip= inuse_host= max_licensed_version=v3 radio_license_id={radio_license} requires_additional_license=0 fpc_mac= wan_connected=1 licensed_clients=2 available_clients=2 max_panadapters=4 available_panadapters=4 max_slices=4 available_slices=4 gui_client_ips= gui_client_hosts= gui_client_programs= gui_client_stations= gui_client_handles= \x00\x00\x00'
                 message = b'8T\x00\x8a\x00\x00\x08\x00\x00\x00\x1c-SL\xff\xfff!Hx\x00\x00\x00\x00\x00\x00\x00\x00' + message_text.encode('utf-8')
                 sock.sendto(message, (broadcast_address, port))
-                print("Message sent!")
+                print(f"{current_time} - Ping successful and Radio Broadcast message sent.")
                 if last_status != current_status:
-                    logging.info("Ping successful and message sent.")
+                    logging.info(f"{current_time} - Ping successful and Radio Broadcast message sent.")
                     last_status = current_status
                 time.sleep(11)
             else:
-                current_time = datetime.datetime.now().strftime("%H:%M:%S")
                 print(f"{current_time} - Ping failed, will retry in 10 seconds...")
                 if last_status != current_status:
                     logging.warning(f"{current_time} - Ping status changed to failed.")
@@ -96,12 +96,11 @@ try:
                 time.sleep(10)
 
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"{current_time} - Error: {e}")
             if last_status != 'exception':
-                logging.error(f"Error during ping or UDP broadcast: {e}")
+                logging.error(f"{current_time} - Error during ping or UDP broadcast: {e}")
                 last_status = 'exception'
 finally:
     sock.close()
     logging.info("Socket closed and program terminated.")
     print("Socket closed and program terminated.")
-
