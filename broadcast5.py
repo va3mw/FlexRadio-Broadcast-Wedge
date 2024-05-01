@@ -31,11 +31,24 @@ datetime: For generating timestamps.
 System Requirements
 Operating System: The script is designed for Windows. Commands and behaviors might differ on other operating systems.
 
+To run this on Linux may require some minor edits including change the -n switch to -c.
+
 Network Permissions: Ensure that the script has the necessary permissions to execute network-related 
 commands, such as sending UDP packets and executing ping operations. Firewall and antivirus settings 
 may need to be adjusted to allow these operations.
 
-Written by ChatGPT4 - May 2024
+Usage:
+
+Users must change ALL the variables to match the target radio.
+
+After starting, broadcast messages on 255.255.255.255 should be visable to the Radio choose on any client
+and the operator can connect to the radio directly over a VPN or another Subnet.  Users will need to ensure 
+that UDP traffic can be passed on the VPN tunnel.
+
+After the client is connected to the radio, this script can be terminated if desiired, however, there is no
+risk in leaving it running 100% of the time.
+
+Written by VA3MW with the help of ChatGPT4 - May 2024
 
 """
 
