@@ -82,7 +82,7 @@ if user_input != "YES":
     print("User did not acknowledge the risks. Exiting.")
     exit()
 
-# Variables that can be modified according to the desired configuration
+# Variables that MUST be modified according to the desired configuration
 ip_address = '192.168.110.76'         # Target radio IP address
 callsign = 'VA3MW'                    # User's Callsign
 nickname = 'Flex6600'                 # Radio NickName
