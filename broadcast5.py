@@ -66,29 +66,41 @@ port = 4992
 
 # Create and configure the UDP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+last_status = None
 
 try:
     while True:
         # Ping the IP address
         try:
             response = subprocess.run(['ping', ping_option, '1', ip_address], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            if response.returncode == 0:
+            current_status = 'successful' if response.returncode == 0 else 'failed'
+            
+            if current_status == 'successful':
                 message_text = f'discovery_protocol_version=3.0.0.2 model={model} serial={serial} version={version} nickname={nickname} callsign={callsign} ip={ip_address} port=4992 status=Available inuse_ip= inuse_host= max_licensed_version=v3 radio_license_id={radio_license} requires_additional_license=0 fpc_mac= wan_connected=1 licensed_clients=2 available_clients=2 max_panadapters=4 available_panadapters=4 max_slices=4 available_slices=4 gui_client_ips= gui_client_hosts= gui_client_programs= gui_client_stations= gui_client_handles= \x00\x00\x00'
                 message = b'8T\x00\x8a\x00\x00\x08\x00\x00\x00\x1c-SL\xff\xfff!Hx\x00\x00\x00\x00\x00\x00\x00\x00' + message_text.encode('utf-8')
                 sock.sendto(message, (broadcast_address, port))
-                logging.info("Message sent successfully.")
                 print("Message sent!")
-                time.sleep(11)  # Regular interval
+                if last_status != current_status:
+                    logging.info("Ping successful and message sent.")
+                    last_status = current_status
+                time.sleep(11)
             else:
                 current_time = datetime.datetime.now().strftime("%H:%M:%S")
-                logging.warning(f"{current_time} - Ping failed, will retry in 10 seconds...")
-                print(f"{current_time} - Ping failed, will retry in 10 seconds...")
-                time.sleep(10)  # Retry interval
+                if last_status != current_status:
+                    logging.warning(f"{current_time} - Ping failed, will retry in 10 seconds...")
+                    print(f"{current_time} - Ping failed, will retry in 10 seconds...")
+                    last_status = current_status
+                time.sleep(10)
+
         except Exception as e:
-            logging.error(f"Error during ping or UDP broadcast: {e}")
-            print(f"Error: {e}")
+            if last_status != 'exception':
+                logging.error(f"Error during ping or UDP broadcast: {e}")
+                print(f"Error: {e}")
+                last_status = 'exception'
 finally:
     sock.close()
     logging.info("Socket closed and program terminated.")
+    print("Socket closed and program terminated.")
