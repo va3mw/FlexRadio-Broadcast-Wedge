@@ -9,8 +9,14 @@ Broadcasts do not cross routers or VPN tunnels, so a remote SmartSDR never sees
 the radio even though it could reach the radio's IP address. The wedge carries
 those announcements across.
 
-> **Use at your own risk.** This program is provided "as is", without warranty
-> of any kind. It is not supported in any way by FlexRadio Inc.
+> **SmartLink is the best way to operate a FlexRadio remotely.** This program
+> is only for people who already run their own VPN.
+>
+> **There is no warranty. You are on your own.** This program is provided "as
+> is", without warranty of any kind. It is not a FlexRadio product and is not
+> supported in any way by FlexRadio Inc.
+
+**New to networking? Follow the step-by-step [Setup Guide](SETUP.md).**
 
 ## How it works
 
