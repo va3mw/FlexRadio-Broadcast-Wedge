@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Broadcast Wedge</title>
+<style>
+/* Styled after SmartSDR CAT / DAX: light Windows panel, list of tiles. */
+:root {
+  --win: #ececec; --panel: #ffffff; --line: #c9c9c9; --line2: #e2e2e2;
+  --text: #1e1e1e; --dim: #6b6b6b;
+  --blue: #1565d8; --red: #e0211b; --green: #3e8e3e; --grey: #8a8a8a;
+  --btn: #3a3a3a; --btn-h: #555;
+  --mono: "Cascadia Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--win); color: var(--text);
+  font: 12px "Segoe UI", system-ui, sans-serif; }
+body { display: flex; flex-direction: column; padding: 6px 8px 8px; gap: 6px; user-select: none; }
+input, textarea, #log { user-select: text; }
+button { font: inherit; cursor: pointer; }
+select, textarea, input[type=text], input[type=number] { font: inherit; border: 1px solid #a9a9a9; border-radius: 2px;
+  background: #fff; color: var(--text); padding: 2px 4px; }
+textarea { font-family: var(--mono); resize: vertical; min-height: 58px; width: 100%; }
+input[type=number] { width: 80px; }
+.head { display: flex; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--line); padding: 8px 10px; }
+.head .txt { flex: 1; line-height: 1.35; font-size: 12.5px; }
+.dim { color: var(--dim); }
+.dot { width: 13px; height: 13px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #9a9a9a, #555); flex: none; }
+.dot.on { background: radial-gradient(circle at 35% 35%, #7fb2ff, #1d4fbf); }
+.dot.busy { background: radial-gradient(circle at 35% 35%, #ffd27a, #c88700); }
+.dot.bad { background: radial-gradient(circle at 35% 35%, #ff9a94, #c21a14); }
+#main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; min-height: 120px; }
+.sect { background: var(--panel); border: 1px solid var(--line); }
+.sect > h4 { margin: 0; padding: 5px 8px; font-size: 12px; font-weight: 600; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 6px; }
+.sect > h4 .sub { font-weight: 400; color: var(--dim); margin-left: auto; text-align: right; }
+.item { display: flex; gap: 10px; padding: 7px 8px; border-bottom: 1px solid var(--line2); align-items: center; }
+.item:last-child { border-bottom: none; }
+.tile { width: 46px; height: 38px; flex: none; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 12px; font-weight: 600; background: var(--blue); }
+.tile.off { background: var(--grey); }
+.item .body { flex: 1; min-width: 0; line-height: 1.4; }
+.item .body div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .name { font-size: 12.5px; }
+.item label { display: flex; align-items: center; gap: 4px; flex: none; }
+.empty { padding: 10px 8px; color: var(--dim); }
+.err-text { color: var(--red); }
+.buttons { display: flex; justify-content: space-between; gap: 6px; }
+.btn { background: var(--btn); color: #fff; border: none; border-radius: 4px; padding: 5px 0; flex: 1; }
+.btn:hover:not(:disabled) { background: var(--btn-h); }
+.btn.light { background: #fff; color: var(--text); border: 1px solid #a9a9a9; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.25); display: none; z-index: 10; }
+.modal.open { display: flex; }
+.dlg { background: var(--win); border: 1px solid #888; margin: auto; width: calc(100% - 20px); max-height: calc(100% - 20px);
+  display: flex; flex-direction: column; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+.dlg h3 { margin: 0; padding: 8px 10px; font-size: 13px; font-weight: 600; background: #fff; border-bottom: 1px solid var(--line); }
+.dlg .content { padding: 10px; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+.dlg .foot { display: flex; gap: 6px; padding: 8px 10px; border-top: 1px solid var(--line); }
+.group { border: 1px solid var(--line); background: #fff; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.group > b { font-weight: 600; }
+.group label { display: flex; align-items: flex-start; gap: 6px; }
+.field { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 6px; }
+.field > span { color: var(--dim); }
+.field select { min-width: 0; width: 100%; }
+.hint { color: var(--dim); font-size: 11px; }
+#logDlg .dlg { width: calc(100% - 12px); height: calc(100% - 12px); max-height: none; }
+.logbar { display: flex; gap: 6px; align-items: center; padding: 6px 8px; background: #fff; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+#log { flex: 1; overflow: auto; background: #fff; font: 11px var(--mono); padding: 4px 6px; white-space: pre-wrap; word-break: break-word; }
+#log .WARN { color: #a15c00; } #log .ERROR { color: var(--red); } #log .DEBUG { color: var(--dim); }
+#toast { position: fixed; left: 10px; right: 10px; bottom: 10px; background: #333; color: #fff; padding: 8px 10px;
+  border-radius: 4px; display: none; z-index: 20; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="dot" id="dot"></div>
+  <div class="txt" id="headTxt"><span class="dim">Starting…</span></div>
+</div>
+
+<div id="main"></div>
+
+<div class="buttons">
+  <button class="btn" id="btnSettings">Settings</button>
+  <button class="btn" id="btnLog">Log</button>
+</div>
+
+<div class="modal" id="setDlg"><div class="dlg">
+  <h3>Settings</h3>
+  <div class="content">
+    <div class="group">
+      <b>This PC is on</b>
+      <label><input type="radio" name="role" value="rsc"> <span>the <b>radio</b> subnet (RSC)<br><span class="hint">Hears the radios and serves them to USCs.</span></span></label>
+      <label><input type="radio" name="role" value="usc"> <span>the <b>user</b> subnet (USC)<br><span class="hint">Fetches radios from RSCs and broadcasts them for SmartSDR.</span></span></label>
+      <label><input type="radio" name="role" value="both"> <span><b>both</b><br><span class="hint">Has its own radios and also wants radios from another site.</span></span></label>
+    </div>
+    <div class="group" id="grpRSC">
+      <b>Radio subnet (RSC)</b>
+      <div class="field"><span>TCP port</span><input id="sPort" type="number" min="1024" max="65535"></div>
+      <div class="hint">USCs connect to this PC on this port. Allow it through Windows Firewall and the VPN.</div>
+    </div>
+    <div class="group" id="grpUSC">
+      <b>User subnet (USC)</b>
+      <div>RSC addresses, one per line</div>
+      <textarea id="sServers" spellcheck="false" placeholder="192.168.110.20&#10;cottage-pc:4996"></textarea>
+      <div class="hint">The port defaults to 4996.</div>
+      <div class="field"><span>Broadcast on</span><select id="sIface"></select></div>
+    </div>
+    <div class="err-text" id="sErr"></div>
+  </div>
+  <div class="foot">
+    <button class="btn" id="btnSetSave">Save</button>
+    <button class="btn light" id="btnSetCancel">Cancel</button>
+  </div>
+</div></div>
+
+<div class="modal" id="logDlg"><div class="dlg">
+  <div class="logbar">
+    <select id="logLevel"><option value="1">Debug</option><option value="2" selected>Info</option><option value="3">Warn</option></select>
+    <label><input id="logFollow" type="checkbox" checked> Follow</label>
+    <span style="flex:1"></span>
+    <button class="btn light" id="btnCopyLog" style="flex:0 0 auto;padding:4px 10px">Copy</button>
+    <button class="btn light" id="btnLogFolder" style="flex:0 0 auto;padding:4px 10px">Folder</button>
+    <button class="btn" id="btnLogClose" style="flex:0 0 auto;padding:4px 12px">Close</button>
+  </div>
+  <div id="log" tabindex="0"></div>
+</div></div>
+
+<div id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const api = () => window.go.main.App;
+const LEVELS = { TRAFFIC: 0, DEBUG: 1, INFO: 2, WARN: 3, ERROR: 4 };
+const MAXLOG = 4000;
+let status = null;
+let logEntries = [], lastLogId = 0;
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.style.display = "block";
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.style.display = "none", 6000);
+}
+async function call(fn, ...args) {
+  try { return await api()[fn](...args); } catch (e) { toast(String(e)); throw e; }
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const open = id => $(id).classList.add("open");
+const close = id => $(id).classList.remove("open");
+const isOpen = id => $(id).classList.contains("open");
+const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+
+// ---------- main view ----------
+const radioBody = r =>
+  `<div class="name">${esc(r.nickname || r.model || "FlexRadio")} <span class="dim">${esc(r.callsign || "")}</span></div>
+   <div>${esc(r.model)} &nbsp;${esc(r.ip)}</div>
+   <div class="dim">${esc(r.status || "")} &nbsp;v${esc(r.version || "?")}</div>`;
+const tileText = r => esc((r.model || "FLEX").replace(/^FLEX-?/i, "").slice(0, 5) || "FLEX");
+
+function renderRSC(r) {
+  const state = [
+    r.listening ? "Hearing UDP 4992" : `<span class="err-text" title="${esc(r.listen_err)}">UDP 4992 unavailable</span>`,
+    r.serving ? `serving TCP ${r.port}` : `<span class="err-text" title="${esc(r.serve_err)}">TCP ${r.port} unavailable</span>`,
+  ].join(", ");
+  const radios = r.radios.length ? r.radios.map(x =>
+    `<div class="item">
+       <div class="tile${x.exported ? "" : " off"}">${tileText(x.radio)}</div>
+       <div class="body">${radioBody(x.radio)}</div>
+       <label title="Offer this radio to remote users"><input type="checkbox" data-serial="${esc(x.radio.serial)}"${x.exported ? " checked" : ""}> Export</label>
+     </div>`).join("")
+    : `<div class="empty">No radios heard on this subnet yet.</div>`;
+  const clients = r.clients.length ? r.clients.map(c =>
+    `<div class="item"><div class="dot on"></div>
+       <div class="body"><div class="name">${esc(c.addr)}</div>
+       <div class="dim">since ${esc(c.since)} &nbsp;${plural(c.sent, "packet")} sent${c.dropped ? `, ${c.dropped} dropped` : ""}</div></div>
+     </div>`).join("")
+    : `<div class="empty">No USC connected.</div>`;
+  return `<div class="sect"><h4>Radios on this subnet <span class="sub">${state}</span></h4>${radios}</div>
+          <div class="sect"><h4>Connected USCs <span class="sub">${r.clients.length}</span></h4>${clients}</div>`;
+}
+
+function renderUSC(u) {
+  if (!u.links.length)
+    return `<div class="sect"><h4>Remote radios</h4><div class="empty">No RSC address configured. Open Settings and add the address of the PC running the RSC.</div></div>`;
+  return u.links.map(l => {
+    const dot = l.state === "connected" ? "on" : l.state === "connecting" ? "busy" : "bad";
+    const sub = l.state === "connected" ? `connected ${esc(l.since)}, ${plural(l.packets, "packet")}`
+      : l.state === "connecting" ? "connecting…" : `<span class="err-text">${esc(l.err || "down")}</span>`;
+    const radios = l.radios.length ? l.radios.map(r =>
+      `<div class="item"><div class="tile">${tileText(r)}</div><div class="body">${radioBody(r)}</div></div>`).join("")
+      : `<div class="empty">${l.state === "connected" ? "Connected; the RSC is not exporting any radios." : "No radios."}</div>`;
+    return `<div class="sect"><h4><div class="dot ${dot}"></div>RSC ${esc(l.addr)} <span class="sub">${sub}</span></h4>${radios}</div>`;
+  }).join("");
+}
+
+function renderHead(s) {
+  const w = s.wedge, parts = [];
+  let ok = true, any = false;
+  if (w.rsc) {
+    ok = ok && w.rsc.listening && w.rsc.serving;
+    const n = w.rsc.radios.filter(x => x.exported).length;
+    any = any || n > 0;
+    parts.push(`Exporting ${plural(n, "radio")} to ${plural(w.rsc.clients.length, "USC")}`);
+  }
+  if (w.usc) {
+    const up = w.usc.links.filter(l => l.state === "connected").length;
+    const n = new Set(w.usc.links.flatMap(l => l.radios.map(r => r.serial))).size;
+    ok = ok && w.usc.links.length > 0 && up === w.usc.links.length;
+    any = any || n > 0;
+    parts.push(`Rebroadcasting ${plural(n, "radio")} from ${up} of ${plural(w.usc.links.length, "RSC")}`);
+  }
+  const role = { rsc: "Radio Subnet Client (RSC)", usc: "User Subnet Client (USC)", both: "RSC + USC" }[w.role] || "";
+  $("headTxt").innerHTML = `<b>${role}</b><br>${parts.join("<br>")}`;
+  $("dot").className = "dot " + (!ok ? "bad" : any ? "on" : "busy");
+}
+
+function onStatus(s) {
+  status = s;
+  renderHead(s);
+  // Rebuilding under the pointer would swallow a click on an Export box.
+  if (!$("main").matches(":active, :has(:active)"))
+    $("main").innerHTML = (s.wedge.rsc ? renderRSC(s.wedge.rsc) : "") + (s.wedge.usc ? renderUSC(s.wedge.usc) : "");
+}
+$("main").addEventListener("change", e => {
+  const serial = e.target.dataset && e.target.dataset.serial;
+  if (serial) call("SetExported", serial, e.target.checked);
+});
+
+// ---------- settings ----------
+function showRoleGroups() {
+  const role = document.querySelector("input[name=role]:checked").value;
+  $("grpRSC").style.display = role === "usc" ? "none" : "";
+  $("grpUSC").style.display = role === "rsc" ? "none" : "";
+}
+document.querySelectorAll("input[name=role]").forEach(r => r.onchange = showRoleGroups);
+
+async function openSettings() {
+  const s = await call("GetStatus"), c = s.config;
+  document.querySelector(`input[name=role][value=${c.role}]`).checked = true;
+  $("sPort").value = c.listen_port;
+  $("sServers").value = c.servers.join("\n");
+  const ifs = (s.wedge.usc ? s.wedge.usc.interfaces : []).map(i => [i.ip, `${i.ip} (${i.name})`]);
+  if (c.broadcast_iface && !ifs.some(([ip]) => ip === c.broadcast_iface)) ifs.push([c.broadcast_iface, c.broadcast_iface + " (not up)"]);
+  $("sIface").innerHTML = [["", "All network interfaces"]].concat(ifs)
+    .map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join("");
+  $("sIface").value = c.broadcast_iface;
+  $("sErr").textContent = "";
+  showRoleGroups();
+  open("setDlg");
+}
+$("btnSettings").onclick = openSettings;
+$("btnSetCancel").onclick = () => close("setDlg");
+$("btnSetSave").onclick = async () => {
+  try {
+    await api().SaveSettings({
+      role: document.querySelector("input[name=role]:checked").value,
+      listen_port: parseInt($("sPort").value, 10) || 0,
+      servers: $("sServers").value.split(/[\n,]+/).map(x => x.trim()).filter(Boolean),
+      broadcast_iface: $("sIface").value,
+    });
+    close("setDlg");
+  } catch (e) { $("sErr").textContent = String(e); }
+};
+
+// ---------- log ----------
+function renderLog() {
+  const min = parseInt($("logLevel").value, 10);
+  $("log").innerHTML = logEntries.filter(e => LEVELS[e.level] >= min)
+    .map(e => `<div class="${e.level}">${e.time} ${e.level.padEnd(5)} ${esc(e.source.padEnd(6))} ${esc(e.msg)}</div>`).join("");
+  if ($("logFollow").checked) $("log").scrollTop = $("log").scrollHeight;
+}
+function addLogs(batch) {
+  for (const e of batch) if (e.id > lastLogId) { logEntries.push(e); lastLogId = e.id; }
+  if (logEntries.length > MAXLOG) logEntries = logEntries.slice(-MAXLOG);
+  if (isOpen("logDlg")) renderLog();
+}
+$("btnLog").onclick = () => { open("logDlg"); renderLog(); };
+$("btnLogClose").onclick = () => close("logDlg");
+$("logLevel").onchange = renderLog;
+$("btnLogFolder").onclick = () => call("OpenLogFolder");
+$("btnCopyLog").onclick = () => navigator.clipboard.writeText($("log").innerText).then(() => toast("Log copied"));
+
+// ---------- start ----------
+async function init() {
+  if (!(window.go && window.runtime)) { setTimeout(init, 50); return; }
+  window.runtime.EventsOn("status", onStatus);
+  window.runtime.EventsOn("log", addLogs);
+  addLogs(await call("GetLogs", 0));
+  onStatus(await call("GetStatus"));
+}
+init();
+</script>
+</body>
+</html>

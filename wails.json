@@ -1,0 +1,17 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "BroadcastWedge",
+  "outputfilename": "BroadcastWedge",
+  "frontend:install": "",
+  "frontend:build": "",
+  "frontend:dir": "frontend",
+  "wailsjsdir": "",
+  "author": {
+    "name": "Michael VA3MW"
+  },
+  "info": {
+    "productName": "FlexRadio Broadcast Wedge",
+    "productVersion": "2.0.0",
+    "comments": "Relays FlexRadio discovery broadcasts across a VPN"
+  }
+}
