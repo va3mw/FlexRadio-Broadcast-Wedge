@@ -68,6 +68,17 @@ Settings and logs are stored in `%AppData%\BroadcastWedge`.
   or router, not of this program: the wedge only makes the radio visible.
 - The RSC shares UDP 4992 with SmartSDR, so both can run on the same PC.
 
+## Tailscale
+
+This has been tested over a [Tailscale](https://tailscale.com) network. On the
+USC, enter the **Tailscale IP address of the RSC PC** as the RSC address.
+
+This has not been fully tested, and it may not require a full VPN. The
+Tailscale address only carries the link between the RSC and the USC. SmartSDR
+still connects to the radio's own IP address, so the SmartSDR PC needs a route
+to the radio's network; with Tailscale that normally means a subnet router at
+the radio site. Reports of what does and does not work are welcome.
+
 ## Notes
 
 - A USC rebroadcasts from every active network interface unless one is picked
