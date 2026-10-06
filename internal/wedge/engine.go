@@ -214,13 +214,19 @@ type RSCStatus struct {
 	Clients   []ClientView `json:"clients"`
 }
 
+// RemoteRadio is a radio a USC receives from an RSC.
+type RemoteRadio struct {
+	Radio      vita.Radio `json:"radio"`
+	Advertised bool       `json:"advertised"` // rebroadcast on the local subnet
+}
+
 type LinkView struct {
-	Addr    string       `json:"addr"`
-	State   string       `json:"state"` // connecting, connected, down
-	Err     string       `json:"err"`
-	Since   string       `json:"since"`
-	Packets uint64       `json:"packets"`
-	Radios  []vita.Radio `json:"radios"`
+	Addr    string        `json:"addr"`
+	State   string        `json:"state"` // connecting, connected, down
+	Err     string        `json:"err"`
+	Since   string        `json:"since"`
+	Packets uint64        `json:"packets"`
+	Radios  []RemoteRadio `json:"radios"`
 }
 
 type USCStatus struct {
@@ -256,14 +262,14 @@ func (e *Engine) Status() Status {
 	if e.role == config.RoleUSC || e.role == config.RoleBoth {
 		u := &USCStatus{Links: []LinkView{}, Iface: e.bcastSel, Interfaces: Interfaces()}
 		for _, l := range e.links {
-			v := LinkView{Addr: l.addr, State: l.state, Err: l.err, Packets: l.packets, Radios: []vita.Radio{}}
+			v := LinkView{Addr: l.addr, State: l.state, Err: l.err, Packets: l.packets, Radios: []RemoteRadio{}}
 			if l.state == "connected" {
 				v.Since = l.since.Format("15:04:05")
 			}
 			for _, s := range l.radios {
-				v.Radios = append(v.Radios, s.radio)
+				v.Radios = append(v.Radios, RemoteRadio{Radio: s.radio, Advertised: !cfg.IsMuted(s.radio.Serial)})
 			}
-			sort.Slice(v.Radios, func(i, j int) bool { return v.Radios[i].Serial < v.Radios[j].Serial })
+			sort.Slice(v.Radios, func(i, j int) bool { return v.Radios[i].Radio.Serial < v.Radios[j].Radio.Serial })
 			u.Links = append(u.Links, v)
 		}
 		st.USC = u

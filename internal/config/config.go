@@ -30,6 +30,7 @@ type Config struct {
 	// USC
 	Servers        []string `json:"servers"`         // RSC addresses, host or host:port
 	BroadcastIface string   `json:"broadcast_iface"` // local IPv4 to rebroadcast from; "" = all interfaces
+	Muted          []string `json:"muted"`           // radio serials received but NOT advertised locally
 }
 
 func Default() *Config {
@@ -50,6 +51,9 @@ func (c *Config) normalize() {
 	if c.Hidden == nil {
 		c.Hidden = []string{}
 	}
+	if c.Muted == nil {
+		c.Muted = []string{}
+	}
 	servers := []string{}
 	for _, s := range c.Servers {
 		if s = strings.TrimSpace(s); s != "" {
@@ -65,6 +69,17 @@ func (c Config) IsUSC() bool { return c.Role == RoleUSC || c.Role == RoleBoth }
 // IsHidden reports whether the radio with this serial is withheld from USCs.
 func (c Config) IsHidden(serial string) bool {
 	for _, s := range c.Hidden {
+		if s == serial {
+			return true
+		}
+	}
+	return false
+}
+
+// IsMuted reports whether a USC keeps the radio with this serial to itself
+// instead of advertising it on the local subnet.
+func (c Config) IsMuted(serial string) bool {
+	for _, s := range c.Muted {
 		if s == serial {
 			return true
 		}
@@ -107,6 +122,7 @@ func (s *Store) Get() Config {
 	c := *s.cfg
 	c.Hidden = append([]string{}, s.cfg.Hidden...)
 	c.Servers = append([]string{}, s.cfg.Servers...)
+	c.Muted = append([]string{}, s.cfg.Muted...)
 	return c
 }
 

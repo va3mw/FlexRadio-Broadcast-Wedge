@@ -139,6 +139,12 @@ After a few seconds the window should show a blue dot, the word
 
 ![Broadcast Wedge on your PC, connected and showing two radios](screenshot-usc.png)
 
+Each radio has an **Advertise** tick box beside it, and it starts ticked.
+Leave it ticked for the radios you want to use. If there is a radio you do not
+want to see in SmartSDR on this network, untick its box; it stays in this list
+but disappears from SmartSDR a few seconds later. Tick it again to bring it
+back.
+
 ## Step 5: Start SmartSDR
 
 Start SmartSDR on your PC. Your radio should now be in the list. Select it
@@ -211,7 +217,7 @@ more detail.
 | Your PC shows a red dot and a message with **timeout** or **refused** | Your PC cannot reach the radio PC. Check the VPN is connected, the address you typed is correct, and Broadcast Wedge is running on the radio PC. Then see "Opening the firewall" below. |
 | Your PC shows **not a Broadcast Wedge RSC** | The address you typed belongs to something else. Recheck the radio PC's address. |
 | Your PC shows **connected** but **the RSC is not exporting any radios** | The radio PC is reachable but has no radios to offer. Look at the radio PC: is the radio listed, and is **Export** ticked? |
-| The radio is listed in Broadcast Wedge but **not in SmartSDR** | Close and restart SmartSDR. If it still does not appear, open **Settings**, change **Broadcast on** from **All network interfaces** to the entry for your normal network, and click **Save**. |
+| The radio is listed in Broadcast Wedge but **not in SmartSDR** | Check the radio's **Advertise** box is ticked. Then close and restart SmartSDR. If it still does not appear, open **Settings**, change **Broadcast on** from **All network interfaces** to the entry for your normal network, and click **Save**. |
 | The radio appears on a **Maestro** but will not connect | If your VPN is Tailscale, this is expected. See "If your VPN is Tailscale" above. |
 | The radio appears in SmartSDR but **will not connect**, or connects with no display or audio | The VPN is blocking traffic between your PC and the radio. Repeat Step 1. This is a VPN problem that Broadcast Wedge cannot fix; SmartLink is the alternative. |
 

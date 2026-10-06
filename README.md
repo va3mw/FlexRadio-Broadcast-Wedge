@@ -57,6 +57,19 @@ Any number of USCs can use one RSC, and one USC can use several RSCs.
    enter the RSC PC's IP address (as reachable over the VPN).
 3. Start SmartSDR. The remote radios are in the chooser.
 
+### Choosing which radios appear
+
+Each end has its own tick box per radio, and both are on by default:
+
+- **Export**, on the RSC, decides whether a radio is sent to remote users at
+  all. Untick it and no USC receives that radio.
+- **Advertise**, on the USC, decides whether a radio that arrives is announced
+  on the local network. Untick it and that radio stays listed in Broadcast
+  Wedge but disappears from SmartSDR's chooser on this network a few seconds
+  later. Other USCs are not affected.
+
+Both choices are remembered across restarts.
+
 Settings and logs are stored in `%AppData%\BroadcastWedge`.
 
 ## Network requirements

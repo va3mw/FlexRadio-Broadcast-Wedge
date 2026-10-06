@@ -13,7 +13,7 @@ import (
 	"github.com/va3mw/FlexRadio-Broadcast-Wedge/internal/wedge"
 )
 
-const Version = "2.1.0"
+const Version = "2.1.1"
 
 type Service struct {
 	log    *logx.Logger
@@ -88,6 +88,30 @@ func (s *Service) SaveSettings(n Settings) error {
 	s.log.Log(logx.Info, "app", "settings: role %s, RSC port %d, RSCs %v, broadcast interface %q", n.Role, n.ListenPort, servers, n.BroadcastIface)
 	s.engine.Restart()
 	return nil
+}
+
+// SetAdvertised chooses whether a USC rebroadcasts a radio it receives. It
+// takes effect on the radio's next discovery packet; SmartSDR then drops a
+// silenced radio from its list after a few seconds.
+func (s *Service) SetAdvertised(serial string, advertised bool) error {
+	err := s.cfg.Update(func(c *config.Config) {
+		muted := []string{}
+		for _, m := range c.Muted {
+			if m != serial {
+				muted = append(muted, m)
+			}
+		}
+		if !advertised {
+			muted = append(muted, serial)
+		}
+		c.Muted = muted
+	})
+	if advertised {
+		s.log.Log(logx.Info, "app", "radio %s is now advertised on this subnet", serial)
+	} else {
+		s.log.Log(logx.Info, "app", "radio %s is no longer advertised on this subnet", serial)
+	}
+	return err
 }
 
 // SetExported chooses whether an RSC offers a radio to USCs. It takes effect

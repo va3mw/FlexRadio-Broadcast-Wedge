@@ -111,7 +111,9 @@ func (e *Engine) session(ctx context.Context, l *link, bc *broadcaster) error {
 		if !known {
 			log.Info("relaying %s \"%s\" serial %s at %s from RSC %s", r.Model, r.Nickname, r.Serial, r.IP, l.addr)
 		}
-		bc.send(buf[:n])
+		if !e.cfg.Get().IsMuted(r.Serial) {
+			bc.send(buf[:n])
+		}
 		if changed {
 			e.onChange()
 		}

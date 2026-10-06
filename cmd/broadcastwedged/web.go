@@ -119,16 +119,19 @@ func call(svc *service.Service, method string, args []json.RawMessage) (any, err
 			return nil, err
 		}
 		return nil, svc.SaveSettings(s)
-	case "SetExported":
+	case "SetExported", "SetAdvertised":
 		var serial string
-		var exported bool
+		var on bool
 		if err := arg(0, &serial); err != nil {
 			return nil, err
 		}
-		if err := arg(1, &exported); err != nil {
+		if err := arg(1, &on); err != nil {
 			return nil, err
 		}
-		return nil, svc.SetExported(serial, exported)
+		if method == "SetAdvertised" {
+			return nil, svc.SetAdvertised(serial, on)
+		}
+		return nil, svc.SetExported(serial, on)
 	}
 	return nil, fmt.Errorf("unknown method %q", method)
 }

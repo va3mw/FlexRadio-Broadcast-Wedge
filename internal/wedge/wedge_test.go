@@ -44,6 +44,7 @@ type rig struct {
 	t        *testing.T
 	rsc, usc *Engine
 	rscCfg   *config.Store
+	uscCfg   *config.Store
 	radio    *net.UDPConn // sends to the RSC as if it were a radio
 	sink     *net.UDPConn // stands in for SmartSDR on the user subnet
 }
@@ -73,7 +74,7 @@ func newRig(t *testing.T) *rig {
 		c.Role, c.Servers = config.RoleUSC, []string{"127.0.0.1:" + strconv.Itoa(tcpPort)}
 	})
 
-	r := &rig{t: t, rscCfg: rscCfg, radio: radio, sink: sink}
+	r := &rig{t: t, rscCfg: rscCfg, uscCfg: uscCfg, radio: radio, sink: sink}
 	r.rsc = NewWithOptions(l, rscCfg, nil, Options{DiscoveryAddr: "127.0.0.1:" + strconv.Itoa(udpPort)})
 	r.usc = NewWithOptions(l, uscCfg, nil, Options{BroadcastTo: sink.LocalAddr().(*net.UDPAddr)})
 	r.rsc.Start()
@@ -156,6 +157,28 @@ func TestHiddenRadioNotRelayed(t *testing.T) {
 	r.rscCfg.Update(func(c *config.Config) { c.Hidden = nil })
 	if got := r.relayed(discoveryPacket(serial, "127.0.0.1")); got == nil {
 		t.Fatal("radio still hidden after being re-exported")
+	}
+}
+
+func TestMutedRadioNotAdvertised(t *testing.T) {
+	r := newRig(t)
+	const serial = "1111-2222-6600-3333"
+	pkt := discoveryPacket(serial, "127.0.0.1")
+	r.uscCfg.Update(func(c *config.Config) { c.Muted = []string{serial} })
+	if got := r.relayed(pkt); got != nil {
+		t.Fatal("muted radio was advertised")
+	}
+	rs := r.usc.Status().USC.Links[0].Radios
+	if len(rs) != 1 || rs[0].Advertised {
+		t.Fatalf("muted radio should be listed, not advertised: %+v", rs)
+	}
+	other := discoveryPacket("9999-2222-6600-3333", "127.0.0.1")
+	if got := r.relayed(other); !bytes.Equal(got, other) {
+		t.Fatal("other radio was not advertised")
+	}
+	r.uscCfg.Update(func(c *config.Config) { c.Muted = nil })
+	if got := r.relayed(pkt); !bytes.Equal(got, pkt) {
+		t.Fatal("radio still muted after being turned back on")
 	}
 }
 

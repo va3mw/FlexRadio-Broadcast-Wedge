@@ -195,8 +195,12 @@ function renderUSC(u) {
     const dot = l.state === "connected" ? "on" : l.state === "connecting" ? "busy" : "bad";
     const sub = l.state === "connected" ? `connected ${esc(l.since)}, ${plural(l.packets, "packet")}`
       : l.state === "connecting" ? "connecting…" : `<span class="err-text">${esc(l.err || "down")}</span>`;
-    const radios = l.radios.length ? l.radios.map(r =>
-      `<div class="item"><div class="tile">${tileText(r)}</div><div class="body">${radioBody(r)}</div></div>`).join("")
+    const radios = l.radios.length ? l.radios.map(x =>
+      `<div class="item">
+         <div class="tile${x.advertised ? "" : " off"}">${tileText(x.radio)}</div>
+         <div class="body">${radioBody(x.radio)}</div>
+         <label title="Show this radio to SmartSDR on this network"><input type="checkbox" data-adv="${esc(x.radio.serial)}"${x.advertised ? " checked" : ""}> Advertise</label>
+       </div>`).join("")
       : `<div class="empty">${l.state === "connected" ? "Connected; the RSC is not exporting any radios." : "No radios."}</div>`;
     return `<div class="sect"><h4><div class="dot ${dot}"></div>RSC ${esc(l.addr)} <span class="sub">${sub}</span></h4>${radios}</div>`;
   }).join("");
@@ -213,10 +217,10 @@ function renderHead(s) {
   }
   if (w.usc) {
     const up = w.usc.links.filter(l => l.state === "connected").length;
-    const n = new Set(w.usc.links.flatMap(l => l.radios.map(r => r.serial))).size;
+    const n = new Set(w.usc.links.flatMap(l => l.radios.filter(x => x.advertised).map(x => x.radio.serial))).size;
     ok = ok && w.usc.links.length > 0 && up === w.usc.links.length;
     any = any || n > 0;
-    parts.push(`Rebroadcasting ${plural(n, "radio")} from ${up} of ${plural(w.usc.links.length, "RSC")}`);
+    parts.push(`Advertising ${plural(n, "radio")} from ${up} of ${plural(w.usc.links.length, "RSC")}`);
   }
   const role = { rsc: "Radio Subnet Client (RSC)", usc: "User Subnet Client (USC)", both: "RSC + USC" }[w.role] || "";
   $("headTxt").innerHTML = `<b>${role}</b><br>${parts.join("<br>")}`;
@@ -226,13 +230,14 @@ function renderHead(s) {
 function onStatus(s) {
   status = s;
   renderHead(s);
-  // Rebuilding under the pointer would swallow a click on an Export box.
+  // Rebuilding under the pointer would swallow a click on a tick box.
   if (!$("main").matches(":active, :has(:active)"))
     $("main").innerHTML = (s.wedge.rsc ? renderRSC(s.wedge.rsc) : "") + (s.wedge.usc ? renderUSC(s.wedge.usc) : "");
 }
 $("main").addEventListener("change", e => {
-  const serial = e.target.dataset && e.target.dataset.serial;
-  if (serial) call("SetExported", serial, e.target.checked).then(refresh);
+  const d = e.target.dataset || {};
+  if (d.serial) call("SetExported", d.serial, e.target.checked).then(refresh);
+  if (d.adv) call("SetAdvertised", d.adv, e.target.checked).then(refresh);
 });
 
 // ---------- settings ----------

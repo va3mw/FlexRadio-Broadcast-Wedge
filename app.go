@@ -84,6 +84,12 @@ func (a *App) SetExported(serial string, exported bool) error {
 	return err
 }
 
+func (a *App) SetAdvertised(serial string, advertised bool) error {
+	err := a.svc.SetAdvertised(serial, advertised)
+	a.pushStatus()
+	return err
+}
+
 func (a *App) OpenLogFolder() {
 	exec.Command("explorer", a.log.Dir()).Start()
 }
