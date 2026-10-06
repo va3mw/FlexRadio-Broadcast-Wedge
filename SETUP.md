@@ -160,12 +160,12 @@ Raspberry Pi can do the job instead. This needs a Pi running 64-bit Raspberry
 Pi OS, connected to the same network as the radio, and a little comfort with
 typing commands.
 
-1. On the Pi, download `broadcastwedge_2.1.0_arm64.deb` from
+1. On the Pi, download `broadcastwedge_2.1.1_arm64.deb` from
    <https://github.com/va3mw/FlexRadio-Broadcast-Wedge/releases>.
 2. Open a terminal in the folder you saved it to and type:
 
    ```
-   sudo apt install ./broadcastwedge_2.1.0_arm64.deb
+   sudo apt install ./broadcastwedge_2.1.1_arm64.deb
    ```
 
 3. Find the Pi's address by typing `hostname -I`. The first number shown (for

@@ -88,12 +88,12 @@ Raspberry Pi OS (or any arm64 Debian), so a Pi can take the place of the PC at
 either end. It talks to the Windows program in either direction.
 
 Check the Pi is 64-bit (`uname -m` prints `aarch64`), then download
-`broadcastwedge_2.1.0_arm64.deb` from the
+`broadcastwedge_2.1.1_arm64.deb` from the
 [releases page](https://github.com/va3mw/FlexRadio-Broadcast-Wedge/releases)
 and install it:
 
 ```
-sudo apt install ./broadcastwedge_2.1.0_arm64.deb
+sudo apt install ./broadcastwedge_2.1.1_arm64.deb
 ```
 
 The service starts immediately and at every boot. Open
