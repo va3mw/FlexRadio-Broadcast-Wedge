@@ -18,6 +18,8 @@ those announcements across.
 
 **New to networking? Follow the step-by-step [Setup Guide](SETUP.md).**
 
+![Broadcast Wedge running as a USC, relaying two radios from a remote RSC](screenshot-usc.png)
+
 ## How it works
 
 One program, `BroadcastWedge.exe`, runs at each end in a different role:

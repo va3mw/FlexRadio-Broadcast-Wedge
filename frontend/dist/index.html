@@ -37,7 +37,7 @@ input[type=number] { width: 80px; }
 .sect > h4 .sub { font-weight: 400; color: var(--dim); margin-left: auto; text-align: right; }
 .item { display: flex; gap: 10px; padding: 7px 8px; border-bottom: 1px solid var(--line2); align-items: center; }
 .item:last-child { border-bottom: none; }
-.tile { width: 46px; height: 38px; flex: none; display: flex; align-items: center; justify-content: center;
+.tile { width: 50px; height: 38px; flex: none; display: flex; align-items: center; justify-content: center;
   color: #fff; font-size: 12px; font-weight: 600; background: var(--blue); }
 .tile.off { background: var(--grey); }
 .item .body { flex: 1; min-width: 0; line-height: 1.4; }
@@ -155,7 +155,7 @@ const radioBody = r =>
   `<div class="name">${esc(r.nickname || r.model || "FlexRadio")} <span class="dim">${esc(r.callsign || "")}</span></div>
    <div>${esc(r.model)} &nbsp;${esc(r.ip)}</div>
    <div class="dim">${esc(r.status || "")} &nbsp;v${esc(r.version || "?")}</div>`;
-const tileText = r => esc((r.model || "FLEX").replace(/^FLEX-?/i, "").slice(0, 5) || "FLEX");
+const tileText = r => esc((r.model || "FLEX").replace(/^FLEX-?/i, "").slice(0, 6) || "FLEX");
 
 function renderRSC(r) {
   const state = [

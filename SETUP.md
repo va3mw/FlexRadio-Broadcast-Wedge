@@ -135,7 +135,9 @@ address.
 7. Click **Save**.
 
 After a few seconds the window should show a blue dot, the word
-**connected**, and your radio listed underneath.
+**connected**, and your radio listed underneath, like this:
+
+![Broadcast Wedge on your PC, connected and showing two radios](screenshot-usc.png)
 
 ## Step 5: Start SmartSDR
 
