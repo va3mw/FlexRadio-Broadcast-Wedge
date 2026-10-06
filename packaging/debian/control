@@ -1,0 +1,14 @@
+Package: broadcastwedge
+Version: @VERSION@
+Architecture: @ARCH@
+Maintainer: Michael Walker VA3MW <va3mw@users.noreply.github.com>
+Section: hamradio
+Priority: optional
+Installed-Size: @SIZE@
+Homepage: https://github.com/va3mw/FlexRadio-Broadcast-Wedge
+Description: Relay FlexRadio discovery broadcasts across a VPN
+ Makes FlexRadios on one subnet appear in the SmartSDR radio chooser on
+ another, so SmartSDR can connect to them directly over a VPN or routed link.
+ .
+ Runs as a service and is configured from a web page on port 4997.
+ Not a FlexRadio product; provided with no warranty.

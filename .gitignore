@@ -3,3 +3,4 @@ frontend/wailsjs/
 *.exe
 *.log
 .claude/
+build/linux-*/

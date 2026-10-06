@@ -1,7 +1,6 @@
 package main
 
 import (
-	"embed"
 	"path/filepath"
 
 	"github.com/wailsapp/wails/v2"
@@ -9,14 +8,13 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 
+	"github.com/va3mw/FlexRadio-Broadcast-Wedge/frontend"
 	"github.com/va3mw/FlexRadio-Broadcast-Wedge/internal/config"
 	"github.com/va3mw/FlexRadio-Broadcast-Wedge/internal/logx"
+	"github.com/va3mw/FlexRadio-Broadcast-Wedge/internal/service"
 )
 
-//go:embed all:frontend/dist
-var assets embed.FS
-
-const version = "2.0.0"
+const version = service.Version
 
 func main() {
 	cfg := config.Load()
@@ -31,7 +29,7 @@ func main() {
 		MinWidth:  340,
 		MinHeight: 420,
 		AssetServer: &assetserver.Options{
-			Assets: assets,
+			Assets: frontend.Assets,
 		},
 		BackgroundColour: &options.RGBA{R: 236, G: 236, B: 236, A: 1},
 		OnStartup:        app.startup,

@@ -147,6 +147,34 @@ and connect exactly as you would at home.
 **Leave Broadcast Wedge running on both PCs** for as long as you want the
 radio to appear.
 
+## Using a Raspberry Pi as the radio PC
+
+If you would rather not leave a Windows PC running at the radio's location, a
+Raspberry Pi can do the job instead. This needs a Pi running 64-bit Raspberry
+Pi OS, connected to the same network as the radio, and a little comfort with
+typing commands.
+
+1. On the Pi, download `broadcastwedge_2.1.0_arm64.deb` from
+   <https://github.com/va3mw/FlexRadio-Broadcast-Wedge/releases>.
+2. Open a terminal in the folder you saved it to and type:
+
+   ```
+   sudo apt install ./broadcastwedge_2.1.0_arm64.deb
+   ```
+
+3. Find the Pi's address by typing `hostname -I`. The first number shown (for
+   example `192.168.1.30`) is the one you want.
+4. On any computer on the same network, open a web browser and go to that
+   address followed by `:4997`, for example `http://192.168.1.30:4997`.
+5. You will see the same screen as the Windows program. Click **Settings**,
+   choose **the radio subnet (RSC)** and click **Save**.
+
+From here, carry on at Step 4 above, using the Pi's address as the radio PC's
+address. The Pi starts the program by itself every time it is switched on.
+
+Anyone on your network can open that web page and change the settings; it has
+no password.
+
 ## Each time you use it
 
 1. Make sure the radio PC is on and Broadcast Wedge is running on it.

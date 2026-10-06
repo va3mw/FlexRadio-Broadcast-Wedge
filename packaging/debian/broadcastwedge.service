@@ -1,0 +1,20 @@
+[Unit]
+Description=FlexRadio Broadcast Wedge discovery relay
+Documentation=https://github.com/va3mw/FlexRadio-Broadcast-Wedge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/broadcastwedged -data /var/lib/broadcastwedge -logs /var/log/broadcastwedge
+DynamicUser=yes
+StateDirectory=broadcastwedge
+LogsDirectory=broadcastwedge
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -68,6 +68,40 @@ Settings and logs are stored in `%AppData%\BroadcastWedge`.
   or router, not of this program: the wedge only makes the radio visible.
 - The RSC shares UDP 4992 with SmartSDR, so both can run on the same PC.
 
+## Raspberry Pi and Debian
+
+A headless build runs the same relay as a background service on 64-bit
+Raspberry Pi OS (or any arm64 Debian), so a Pi can take the place of the PC at
+either end. It talks to the Windows program in either direction.
+
+Check the Pi is 64-bit (`uname -m` prints `aarch64`), then download
+`broadcastwedge_2.1.0_arm64.deb` from the
+[releases page](https://github.com/va3mw/FlexRadio-Broadcast-Wedge/releases)
+and install it:
+
+```
+sudo apt install ./broadcastwedge_2.1.0_arm64.deb
+```
+
+The service starts immediately and at every boot. Open
+`http://<address-of-the-pi>:4997` in a browser on the same network; it is the
+same screen as the Windows program, and the role, RSC addresses and Export
+ticks are set there.
+
+| Task | Command |
+| --- | --- |
+| Is it running? | `systemctl status broadcastwedge` |
+| Watch the log | `journalctl -u broadcastwedge -f` |
+| Restart | `sudo systemctl restart broadcastwedge` |
+| Remove | `sudo apt remove broadcastwedge` (`purge` also deletes settings) |
+
+Settings are in `/var/lib/broadcastwedge`, log files in
+`/var/log/broadcastwedge`.
+
+**The web page has no login.** Anyone on the same network who can reach port
+4997 can change the settings. To turn the page off, add ` -http ""` to the
+`ExecStart` line with `sudo systemctl edit --full broadcastwedge`.
+
 ## Tailscale
 
 This has been tested over a [Tailscale](https://tailscale.com) network. On the
@@ -100,6 +134,16 @@ wails build
 ```
 
 The result is `build\bin\BroadcastWedge.exe`.
+
+The Debian package cross-compiles from any machine with Go, Windows included
+(run it from Git Bash there):
+
+```
+sh packaging/build-deb.sh arm64
+```
+
+The result is `build/bin/broadcastwedge_<version>_arm64.deb`. `armhf` and
+`amd64` are also accepted.
 
 ## History
 
