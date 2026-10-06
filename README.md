@@ -111,12 +111,12 @@ USC, enter the **Tailscale IP address of the RSC PC** as the RSC address.
 that is not itself on the Tailscale network cannot complete a connection to
 the radio.
 
+This has not been fully tested, and it may not require a full VPN. Reports of
+what does and does not work are welcome.
+
 **A Maestro will not work this way.** A Maestro on the same network as the USC
 may show the radio in its list, but it cannot complete the connection, because
 Tailscale cannot be installed on a Maestro.
-
-This has not been fully tested, and it may not require a full VPN. Reports of
-what does and does not work are welcome.
 
 ## Notes
 
