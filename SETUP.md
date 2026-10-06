@@ -175,6 +175,18 @@ address. The Pi starts the program by itself every time it is switched on.
 Anyone on your network can open that web page and change the settings; it has
 no password.
 
+## If your VPN is Tailscale
+
+This has been tested with Tailscale, though not fully.
+
+- In Step 4, type the **Tailscale IP address** of the radio PC (it starts
+  with `100.`). You can see it in the Tailscale app on the radio PC.
+- **Tailscale and SmartSDR must be on the same computer.** Run Tailscale,
+  Broadcast Wedge and SmartSDR all on your PC.
+- **A Maestro will not work this way.** It may show the radio in its list,
+  but it will not be able to connect, because Tailscale cannot be installed
+  on a Maestro.
+
 ## Each time you use it
 
 1. Make sure the radio PC is on and Broadcast Wedge is running on it.
@@ -200,6 +212,7 @@ more detail.
 | Your PC shows **not a Broadcast Wedge RSC** | The address you typed belongs to something else. Recheck the radio PC's address. |
 | Your PC shows **connected** but **the RSC is not exporting any radios** | The radio PC is reachable but has no radios to offer. Look at the radio PC: is the radio listed, and is **Export** ticked? |
 | The radio is listed in Broadcast Wedge but **not in SmartSDR** | Close and restart SmartSDR. If it still does not appear, open **Settings**, change **Broadcast on** from **All network interfaces** to the entry for your normal network, and click **Save**. |
+| The radio appears on a **Maestro** but will not connect | If your VPN is Tailscale, this is expected. See "If your VPN is Tailscale" above. |
 | The radio appears in SmartSDR but **will not connect**, or connects with no display or audio | The VPN is blocking traffic between your PC and the radio. Repeat Step 1. This is a VPN problem that Broadcast Wedge cannot fix; SmartLink is the alternative. |
 
 ### Opening the firewall on the radio PC

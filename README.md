@@ -107,11 +107,16 @@ Settings are in `/var/lib/broadcastwedge`, log files in
 This has been tested over a [Tailscale](https://tailscale.com) network. On the
 USC, enter the **Tailscale IP address of the RSC PC** as the RSC address.
 
-This has not been fully tested, and it may not require a full VPN. The
-Tailscale address only carries the link between the RSC and the USC. SmartSDR
-still connects to the radio's own IP address, so the SmartSDR PC needs a route
-to the radio's network; with Tailscale that normally means a subnet router at
-the radio site. Reports of what does and does not work are welcome.
+**Tailscale and SmartSDR must be running on the same computer.** A device
+that is not itself on the Tailscale network cannot complete a connection to
+the radio.
+
+**A Maestro will not work this way.** A Maestro on the same network as the USC
+may show the radio in its list, but it cannot complete the connection, because
+Tailscale cannot be installed on a Maestro.
+
+This has not been fully tested, and it may not require a full VPN. Reports of
+what does and does not work are welcome.
 
 ## Notes
 
