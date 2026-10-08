@@ -124,12 +124,13 @@ func (e *Engine) Start() {
 		e.wg.Go(func() { e.serve(ctx, cfg.ListenPort) })
 	}
 	if cfg.IsUSC() {
-		if len(links) == 0 {
-			e.log.Log(logx.Warn, "usc", "no RSC address configured; nothing to relay")
+		if len(links) == 0 && len(cfg.Manual) == 0 {
+			e.log.Log(logx.Warn, "usc", "no RSC address or manual radio configured; nothing to advertise")
 		}
 		for _, l := range links {
 			e.wg.Go(func() { e.runLink(ctx, l, bc) })
 		}
+		e.wg.Go(func() { e.announceManual(ctx, bc) })
 	}
 	e.wg.Go(func() { e.expire(ctx) })
 	e.onChange()
@@ -229,10 +230,18 @@ type LinkView struct {
 	Radios  []RemoteRadio `json:"radios"`
 }
 
+// ManualView is a hand-entered radio as the USC is treating it.
+type ManualView struct {
+	Radio      config.ManualRadio `json:"radio"`
+	Advertised bool               `json:"advertised"`
+	Relayed    bool               `json:"relayed"` // also arriving from an RSC, which takes precedence
+}
+
 type USCStatus struct {
-	Links      []LinkView `json:"links"`
-	Iface      string     `json:"iface"`
-	Interfaces []Iface    `json:"interfaces"`
+	Links      []LinkView   `json:"links"`
+	Manual     []ManualView `json:"manual"`
+	Iface      string       `json:"iface"`
+	Interfaces []Iface      `json:"interfaces"`
 }
 
 type Status struct {
@@ -260,7 +269,10 @@ func (e *Engine) Status() Status {
 		st.RSC = r
 	}
 	if e.role == config.RoleUSC || e.role == config.RoleBoth {
-		u := &USCStatus{Links: []LinkView{}, Iface: e.bcastSel, Interfaces: Interfaces()}
+		u := &USCStatus{Links: []LinkView{}, Manual: []ManualView{}, Iface: e.bcastSel, Interfaces: Interfaces()}
+		for _, m := range cfg.Manual {
+			u.Manual = append(u.Manual, ManualView{Radio: m, Advertised: !cfg.IsMuted(m.Serial), Relayed: e.relayedLocked(m.Serial)})
+		}
 		for _, l := range e.links {
 			v := LinkView{Addr: l.addr, State: l.state, Err: l.err, Packets: l.packets, Radios: []RemoteRadio{}}
 			if l.state == "connected" {

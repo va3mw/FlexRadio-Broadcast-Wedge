@@ -5,6 +5,7 @@ package service
 import (
 	"fmt"
 	"net"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -13,7 +14,7 @@ import (
 	"github.com/va3mw/FlexRadio-Broadcast-Wedge/internal/wedge"
 )
 
-const Version = "2.1.1"
+const Version = "2.2.0"
 
 type Service struct {
 	log    *logx.Logger
@@ -88,6 +89,77 @@ func (s *Service) SaveSettings(n Settings) error {
 	s.log.Log(logx.Info, "app", "settings: role %s, RSC port %d, RSCs %v, broadcast interface %q", n.Role, n.ListenPort, servers, n.BroadcastIface)
 	s.engine.Restart()
 	return nil
+}
+
+var (
+	versionRE = regexp.MustCompile(`^\d+\.\d+\.\d+\.\d+$`)
+	wordRE    = regexp.MustCompile(`^[^\s=]+$`)
+)
+
+// SaveManual adds a hand-entered radio (index -1) or replaces the one at
+// index. It is announced from the next second on.
+func (s *Service) SaveManual(index int, r config.ManualRadio) error {
+	r.IP, r.Serial, r.Model = strings.TrimSpace(r.IP), strings.TrimSpace(r.Serial), strings.TrimSpace(r.Model)
+	r.Version, r.LicenseID = strings.TrimPrefix(strings.TrimSpace(r.Version), "v"), strings.TrimSpace(r.LicenseID)
+	r.Nickname, r.Callsign = strings.TrimSpace(r.Nickname), strings.ToUpper(strings.TrimSpace(r.Callsign))
+	ip := net.ParseIP(r.IP)
+	switch {
+	case ip == nil || ip.To4() == nil:
+		return fmt.Errorf("IP address must look like 192.168.1.50")
+	case !wordRE.MatchString(r.Serial):
+		return fmt.Errorf("serial number is required, with no spaces (for example 1234-5678-6600-9012)")
+	case !wordRE.MatchString(r.Model):
+		return fmt.Errorf("model is required, with no spaces (for example FLEX-6600)")
+	case !versionRE.MatchString(r.Version):
+		return fmt.Errorf("firmware version must be the full four-part number, for example 4.2.20.41343")
+	case strings.Contains(r.Nickname, "="), strings.ContainsAny(r.Callsign, " ="):
+		return fmt.Errorf("nickname and callsign cannot contain =, and a callsign cannot contain spaces")
+	case r.LicenseID != "" && !wordRE.MatchString(r.LicenseID):
+		return fmt.Errorf("MAC address cannot contain spaces (for example 00-1C-2D-05-07-AE)")
+	}
+	r.IP = ip.To4().String()
+	cfg := s.cfg.Get()
+	if index < -1 || index >= len(cfg.Manual) {
+		return fmt.Errorf("no such manual radio")
+	}
+	for i, m := range cfg.Manual {
+		if i != index && m.Serial == r.Serial {
+			return fmt.Errorf("a manual radio with serial %s already exists", r.Serial)
+		}
+	}
+	if err := s.cfg.Update(func(c *config.Config) {
+		if index < 0 {
+			c.Manual = append(c.Manual, r)
+		} else {
+			c.Manual[index] = r
+		}
+	}); err != nil {
+		return err
+	}
+	s.log.Log(logx.Info, "app", "manual radio saved: %s \"%s\" serial %s at %s (v%s)", r.Model, r.Nickname, r.Serial, r.IP, r.Version)
+	return nil
+}
+
+// RemoveManual deletes the hand-entered radio at index.
+func (s *Service) RemoveManual(index int) error {
+	cfg := s.cfg.Get()
+	if index < 0 || index >= len(cfg.Manual) {
+		return fmt.Errorf("no such manual radio")
+	}
+	gone := cfg.Manual[index]
+	err := s.cfg.Update(func(c *config.Config) {
+		c.Manual = append(c.Manual[:index:index], c.Manual[index+1:]...)
+		// Forget its Advertise choice, so adding it again starts switched on.
+		muted := []string{}
+		for _, m := range c.Muted {
+			if m != gone.Serial {
+				muted = append(muted, m)
+			}
+		}
+		c.Muted = muted
+	})
+	s.log.Log(logx.Info, "app", "manual radio removed: serial %s at %s", gone.Serial, gone.IP)
+	return err
 }
 
 // SetAdvertised chooses whether a USC rebroadcasts a radio it receives. It

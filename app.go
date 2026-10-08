@@ -90,6 +90,18 @@ func (a *App) SetAdvertised(serial string, advertised bool) error {
 	return err
 }
 
+func (a *App) SaveManual(index int, r config.ManualRadio) error {
+	err := a.svc.SaveManual(index, r)
+	a.pushStatus()
+	return err
+}
+
+func (a *App) RemoveManual(index int) error {
+	err := a.svc.RemoveManual(index)
+	a.pushStatus()
+	return err
+}
+
 func (a *App) OpenLogFolder() {
 	exec.Command("explorer", a.log.Dir()).Start()
 }

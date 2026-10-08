@@ -10,6 +10,7 @@ import (
 
 	"github.com/va3mw/FlexRadio-Broadcast-Wedge/internal/config"
 	"github.com/va3mw/FlexRadio-Broadcast-Wedge/internal/logx"
+	"github.com/va3mw/FlexRadio-Broadcast-Wedge/internal/vita"
 )
 
 // discoveryPacket is the packet the legacy Python wedge sent, which SmartSDR
@@ -179,6 +180,37 @@ func TestMutedRadioNotAdvertised(t *testing.T) {
 	r.uscCfg.Update(func(c *config.Config) { c.Muted = nil })
 	if got := r.relayed(pkt); !bytes.Equal(got, pkt) {
 		t.Fatal("radio still muted after being turned back on")
+	}
+}
+
+func TestManualRadioAdvertised(t *testing.T) {
+	r := newRig(t)
+	m := config.ManualRadio{IP: "10.1.2.3", Serial: "4444-5555-8600-6666", Model: "FLEX-8600",
+		Version: "4.2.20.41343", Nickname: "Far Away", Callsign: "VA3MW", LicenseID: "00-1C-2D-00-00-01"}
+	r.uscCfg.Update(func(c *config.Config) { c.Manual = []config.ManualRadio{m} })
+	read := func() *vita.Radio {
+		buf := make([]byte, 4096)
+		r.sink.SetReadDeadline(time.Now().Add(2500 * time.Millisecond))
+		n, _, err := r.sink.ReadFromUDP(buf)
+		if err != nil {
+			return nil
+		}
+		return vita.ParseDiscovery(buf[:n])
+	}
+	got := read()
+	if got == nil || got.Serial != m.Serial || got.IP != m.IP || got.Nickname != m.Nickname || got.Version != m.Version {
+		t.Fatalf("manual radio not advertised correctly: %+v", got)
+	}
+	mv := r.usc.Status().USC.Manual
+	if len(mv) != 1 || !mv[0].Advertised || mv[0].Relayed {
+		t.Fatalf("status: %+v", mv)
+	}
+	r.uscCfg.Update(func(c *config.Config) { c.Muted = []string{m.Serial} })
+	time.Sleep(1200 * time.Millisecond) // let a packet already on its way arrive
+	for read() != nil {
+	}
+	if mv := r.usc.Status().USC.Manual; mv[0].Advertised {
+		t.Fatal("muted manual radio still reported as advertised")
 	}
 }
 

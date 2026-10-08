@@ -153,19 +153,54 @@ and connect exactly as you would at home.
 **Leave Broadcast Wedge running on both PCs** for as long as you want the
 radio to appear.
 
-## Using a Raspberry Pi as the radio PC
+## If you cannot run anything at the radio's location
+
+Normally you need the program running on a PC (or Raspberry Pi) near the
+radio. If that is not possible, you can skip Step 3 and describe the radio to
+the program yourself. You still need a working VPN (Step 1).
+
+**While you are at the radio**, start SmartSDR, connect to the radio, and
+write down these seven things. Most are in **Settings > Radio Setup**:
+
+1. **IP address**, for example `192.168.1.50`
+2. **Serial number**, for example `1234-5678-6600-9012`
+3. **Model**, for example `FLEX-6600`
+4. **Firmware version**, all four parts, for example `4.2.20.41343`
+5. **Nickname**
+6. **Callsign**
+7. **MAC address**, written with dashes, for example `00-1C-2D-05-07-AE`
+
+**On your PC:**
+
+1. Run **BroadcastWedge.exe**, click **Settings**, choose **the user subnet
+   (USC)** and click **Save**. Leave the RSC addresses box empty.
+2. Under **Radios entered by hand**, click **Add**.
+3. Type in the seven values exactly as you wrote them down and click **Save**.
+4. Start SmartSDR. The radio should be in the list.
+
+Things to know about this method:
+
+- The radio is listed whenever the program is running, **even if the radio is
+  switched off or your VPN is not connected**. If SmartSDR lists it but
+  cannot connect, check those two things first.
+- It always shows as available, even if someone else is using the radio.
+- **After you update the radio's firmware**, click **Edit** and type the new
+  firmware version, or SmartSDR may refuse to connect.
+- To take the radio out of SmartSDR's list for a while, untick **Advertise**.
+  To delete it, click **Remove** twice.
+
 
 If you would rather not leave a Windows PC running at the radio's location, a
 Raspberry Pi can do the job instead. This needs a Pi running 64-bit Raspberry
 Pi OS, connected to the same network as the radio, and a little comfort with
 typing commands.
 
-1. On the Pi, download `broadcastwedge_2.1.1_arm64.deb` from
+1. On the Pi, download `broadcastwedge_2.2.0_arm64.deb` from
    <https://github.com/va3mw/FlexRadio-Broadcast-Wedge/releases>.
 2. Open a terminal in the folder you saved it to and type:
 
    ```
-   sudo apt install ./broadcastwedge_2.1.1_arm64.deb
+   sudo apt install ./broadcastwedge_2.2.0_arm64.deb
    ```
 
 3. Find the Pi's address by typing `hostname -I`. The first number shown (for
@@ -218,6 +253,7 @@ more detail.
 | Your PC shows **not a Broadcast Wedge RSC** | The address you typed belongs to something else. Recheck the radio PC's address. |
 | Your PC shows **connected** but **the RSC is not exporting any radios** | The radio PC is reachable but has no radios to offer. Look at the radio PC: is the radio listed, and is **Export** ticked? |
 | The radio is listed in Broadcast Wedge but **not in SmartSDR** | Check the radio's **Advertise** box is ticked. Then close and restart SmartSDR. If it still does not appear, open **Settings**, change **Broadcast on** from **All network interfaces** to the entry for your normal network, and click **Save**. |
+| A radio you **entered by hand** is listed in SmartSDR but will not connect, or SmartSDR wants to update it | Check the radio is switched on and the VPN is connected. Then click **Edit** and check every value against the radio, especially the firmware version. |
 | The radio appears on a **Maestro** but will not connect | If your VPN is Tailscale, this is expected. See "If your VPN is Tailscale" above. |
 | The radio appears in SmartSDR but **will not connect**, or connects with no display or audio | The VPN is blocking traffic between your PC and the radio. Repeat Step 1. This is a VPN problem that Broadcast Wedge cannot fix; SmartLink is the alternative. |
 

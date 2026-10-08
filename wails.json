@@ -11,7 +11,7 @@
   },
   "info": {
     "productName": "FlexRadio Broadcast Wedge",
-    "productVersion": "2.1.1",
+    "productVersion": "2.2.0",
     "comments": "Relays FlexRadio discovery broadcasts across a VPN"
   }
 }

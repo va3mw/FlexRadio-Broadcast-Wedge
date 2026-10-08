@@ -81,6 +81,40 @@ Settings and logs are stored in `%AppData%\BroadcastWedge`.
   or router, not of this program: the wedge only makes the radio visible.
 - The RSC shares UDP 4992 with SmartSDR, so both can run on the same PC.
 
+## Without an RSC: entering a radio by hand
+
+If nothing can run at the radio's location, a USC can work on its own. On the
+USC, click **Add** under **Radios entered by hand** and type in the radio's
+details. The USC then announces that radio itself, once a second, exactly as
+the radio would when idle. No RSC is involved, and hand-entered radios can be
+mixed with RSC connections.
+
+| Field | Example | Notes |
+| --- | --- | --- |
+| IP address | `192.168.1.50` | The radio's address at its own location |
+| Serial number | `1234-5678-6600-9012` | |
+| Model | `FLEX-6600` | |
+| Firmware version | `4.2.20.41343` | All four parts. Update it here after a firmware update. |
+| Nickname | `Cottage` | Optional |
+| Callsign | `VA3MW` | Optional |
+| MAC address | `00-1C-2D-05-07-AE` | With dashes. SmartSDR uses it as the radio's licence ID. |
+
+Every value must match the radio. Note them down from SmartSDR while you are
+at the radio.
+
+This is a fixed description, not the radio's own announcement, so compared
+with using an RSC:
+
+- The radio is advertised **whenever the program is running**, even if the
+  radio is switched off or the VPN is down. SmartSDR will list it and then
+  fail to connect.
+- It always shows as **Available**, even when someone else is using it.
+- If a detail is wrong (most often the firmware version after an update),
+  SmartSDR may refuse the radio or offer to update it.
+
+If an RSC is also supplying the same radio, the USC uses the RSC's packets and
+stops announcing its own.
+
 ## Raspberry Pi and Debian
 
 A headless build runs the same relay as a background service on 64-bit
@@ -88,12 +122,12 @@ Raspberry Pi OS (or any arm64 Debian), so a Pi can take the place of the PC at
 either end. It talks to the Windows program in either direction.
 
 Check the Pi is 64-bit (`uname -m` prints `aarch64`), then download
-`broadcastwedge_2.1.1_arm64.deb` from the
+`broadcastwedge_2.2.0_arm64.deb` from the
 [releases page](https://github.com/va3mw/FlexRadio-Broadcast-Wedge/releases)
 and install it:
 
 ```
-sudo apt install ./broadcastwedge_2.1.1_arm64.deb
+sudo apt install ./broadcastwedge_2.2.0_arm64.deb
 ```
 
 The service starts immediately and at every boot. Open

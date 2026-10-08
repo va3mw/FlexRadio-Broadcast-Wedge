@@ -20,6 +20,18 @@ const (
 // DefaultPort is the TCP port an RSC listens on for USCs.
 const DefaultPort = 4996
 
+// ManualRadio is a radio the user describes by hand, for a USC that has no
+// RSC at the radio's site to learn it from.
+type ManualRadio struct {
+	IP        string `json:"ip"`
+	Serial    string `json:"serial"`
+	Model     string `json:"model"`
+	Version   string `json:"version"` // radio firmware, e.g. 4.2.20.41343
+	Nickname  string `json:"nickname"`
+	Callsign  string `json:"callsign"`
+	LicenseID string `json:"license_id"` // radio_license_id, e.g. 00-1C-2D-05-07-AE
+}
+
 type Config struct {
 	Role string `json:"role"`
 
@@ -28,9 +40,10 @@ type Config struct {
 	Hidden     []string `json:"hidden"`      // radio serials NOT exported to USCs
 
 	// USC
-	Servers        []string `json:"servers"`         // RSC addresses, host or host:port
-	BroadcastIface string   `json:"broadcast_iface"` // local IPv4 to rebroadcast from; "" = all interfaces
-	Muted          []string `json:"muted"`           // radio serials received but NOT advertised locally
+	Servers        []string      `json:"servers"`         // RSC addresses, host or host:port
+	BroadcastIface string        `json:"broadcast_iface"` // local IPv4 to rebroadcast from; "" = all interfaces
+	Muted          []string      `json:"muted"`           // radio serials received but NOT advertised locally
+	Manual         []ManualRadio `json:"manual"`          // radios announced from typed-in details
 }
 
 func Default() *Config {
@@ -53,6 +66,9 @@ func (c *Config) normalize() {
 	}
 	if c.Muted == nil {
 		c.Muted = []string{}
+	}
+	if c.Manual == nil {
+		c.Manual = []ManualRadio{}
 	}
 	servers := []string{}
 	for _, s := range c.Servers {
@@ -123,6 +139,7 @@ func (s *Store) Get() Config {
 	c.Hidden = append([]string{}, s.cfg.Hidden...)
 	c.Servers = append([]string{}, s.cfg.Servers...)
 	c.Muted = append([]string{}, s.cfg.Muted...)
+	c.Manual = append([]ManualRadio{}, s.cfg.Manual...)
 	return c
 }
 

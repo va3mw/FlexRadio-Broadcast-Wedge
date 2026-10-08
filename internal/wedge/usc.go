@@ -120,6 +120,48 @@ func (e *Engine) session(ctx context.Context, l *link, bc *broadcaster) error {
 	}
 }
 
+// announceManual advertises the hand-entered radios once a second, as a radio
+// does. Nothing checks that the radio is there: with no RSC at its site,
+// there is nobody to ask.
+func (e *Engine) announceManual(ctx context.Context, bc *broadcaster) {
+	t := time.NewTicker(time.Second)
+	defer t.Stop()
+	var seq uint8
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case now := <-t.C:
+			cfg := e.cfg.Get()
+			for _, m := range cfg.Manual {
+				if cfg.IsMuted(m.Serial) || e.relayed(m.Serial) {
+					continue
+				}
+				bc.send(vita.BuildDiscovery(vita.Announce{IP: m.IP, Serial: m.Serial, Model: m.Model, Version: m.Version,
+					Nickname: m.Nickname, Callsign: m.Callsign, LicenseID: m.LicenseID}, seq, now))
+			}
+			seq++
+		}
+	}
+}
+
+// relayed reports whether an RSC is currently supplying the radio's real
+// packets, which are better than anything typed in.
+func (e *Engine) relayed(serial string) bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.relayedLocked(serial)
+}
+
+func (e *Engine) relayedLocked(serial string) bool {
+	for _, l := range e.links {
+		if _, ok := l.radios[serial]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 // Iface is a local network a USC can rebroadcast on.
 type Iface struct {
 	IP   string `json:"ip"`

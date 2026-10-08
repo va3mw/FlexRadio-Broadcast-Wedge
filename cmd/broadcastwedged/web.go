@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/va3mw/FlexRadio-Broadcast-Wedge/frontend"
+	"github.com/va3mw/FlexRadio-Broadcast-Wedge/internal/config"
 	"github.com/va3mw/FlexRadio-Broadcast-Wedge/internal/service"
 )
 
@@ -132,6 +133,22 @@ func call(svc *service.Service, method string, args []json.RawMessage) (any, err
 			return nil, svc.SetAdvertised(serial, on)
 		}
 		return nil, svc.SetExported(serial, on)
+	case "SaveManual":
+		var index int
+		var r config.ManualRadio
+		if err := arg(0, &index); err != nil {
+			return nil, err
+		}
+		if err := arg(1, &r); err != nil {
+			return nil, err
+		}
+		return nil, svc.SaveManual(index, r)
+	case "RemoveManual":
+		var index int
+		if err := arg(0, &index); err != nil {
+			return nil, err
+		}
+		return nil, svc.RemoveManual(index)
 	}
 	return nil, fmt.Errorf("unknown method %q", method)
 }

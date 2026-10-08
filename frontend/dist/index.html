@@ -46,6 +46,10 @@ input[type=number] { width: 80px; }
 .item .name { font-size: 12.5px; }
 .item label { display: flex; align-items: center; gap: 4px; flex: none; }
 .empty { padding: 10px 8px; color: var(--dim); }
+.mini { background: #fff; color: var(--text); border: 1px solid #a9a9a9; border-radius: 3px; padding: 1px 8px; font-weight: 400; }
+.mini:hover { background: #f1f1f1; }
+.item .acts { display: flex; flex-direction: column; gap: 3px; align-items: stretch; flex: none; }
+.field input[type=text] { min-width: 0; width: 100%; }
 .err-text { color: var(--red); }
 .buttons { display: flex; justify-content: space-between; gap: 6px; }
 .btn { background: var(--btn); color: #fff; border: none; border-radius: 4px; padding: 5px 0; flex: 1; }
@@ -113,6 +117,35 @@ input[type=number] { width: 80px; }
   <div class="foot">
     <button class="btn" id="btnSetSave">Save</button>
     <button class="btn light" id="btnSetCancel">Cancel</button>
+  </div>
+</div></div>
+
+<div class="modal" id="manDlg"><div class="dlg">
+  <h3 id="manTitle">Add a radio by hand</h3>
+  <div class="content">
+    <div class="hint">For when nothing can run at the radio's location. Every value must match the radio exactly. Note them down from SmartSDR while you are at the radio.</div>
+    <div class="group">
+      <div class="field"><span>IP address</span><input id="mIP" type="text" spellcheck="false" placeholder="192.168.1.50"></div>
+      <div class="field"><span>Serial number</span><input id="mSerial" type="text" spellcheck="false" placeholder="1234-5678-6600-9012"></div>
+      <div class="field"><span>Model</span><input id="mModel" type="text" spellcheck="false" list="mModels" placeholder="FLEX-6600"></div>
+      <div class="field"><span>Firmware version</span><input id="mVersion" type="text" spellcheck="false" placeholder="4.2.20.41343"></div>
+      <div class="field"><span>Nickname</span><input id="mNick" type="text" spellcheck="false"></div>
+      <div class="field"><span>Callsign</span><input id="mCall" type="text" spellcheck="false"></div>
+      <div class="field"><span>MAC address</span><input id="mLic" type="text" spellcheck="false" placeholder="00-1C-2D-00-00-00"></div>
+      <datalist id="mModels">
+        <option>FLEX-6300</option><option>FLEX-6400</option><option>FLEX-6400M</option><option>FLEX-6500</option>
+        <option>FLEX-6600</option><option>FLEX-6600M</option><option>FLEX-6700</option><option>FLEX-6700R</option>
+        <option>FLEX-8400</option><option>FLEX-8400M</option><option>FLEX-8600</option><option>FLEX-8600M</option>
+        <option>AU-510</option><option>AU-510M</option><option>AU-520</option><option>AU-520M</option>
+      </datalist>
+    </div>
+    <div class="hint">MAC address is the radio's network hardware address, written with dashes. SmartSDR uses it as the radio's licence ID.</div>
+    <div class="hint">The radio is advertised whenever this program is running, whether or not it can be reached.</div>
+    <div class="err-text" id="mErr"></div>
+  </div>
+  <div class="foot">
+    <button class="btn" id="btnManSave">Save</button>
+    <button class="btn light" id="btnManCancel">Cancel</button>
   </div>
 </div></div>
 
@@ -188,9 +221,33 @@ function renderRSC(r) {
           <div class="sect"><h4>Connected USCs <span class="sub">${r.clients.length}</span></h4>${clients}</div>`;
 }
 
+function renderManual(u) {
+  const rows = u.manual.length ? u.manual.map((x, i) =>
+    `<div class="item">
+       <div class="tile${x.advertised && !x.relayed ? "" : " off"}">${tileText(x.radio)}</div>
+       <div class="body">
+         <div class="name">${esc(x.radio.nickname || x.radio.model)} <span class="dim">${esc(x.radio.callsign || "")}</span></div>
+         <div>${esc(x.radio.model)} &nbsp;${esc(x.radio.ip)}</div>
+         <div class="dim">${x.relayed ? "Arriving from an RSC; using that instead" : `Entered by hand &nbsp;v${esc(x.radio.version)}`}</div>
+       </div>
+       <div class="acts">
+         <label title="Show this radio to SmartSDR on this network"><input type="checkbox" data-adv="${esc(x.radio.serial)}"${x.advertised ? " checked" : ""}> Advertise</label>
+         <button class="mini" data-man-edit="${i}">Edit</button>
+         <button class="mini${delArmed === i ? " err-text" : ""}" data-man-del="${i}">${delArmed === i ? "Really?" : "Remove"}</button>
+       </div>
+     </div>`).join("")
+    : `<div class="empty">None. Use Add if nothing can run at the radio's location and you know the radio's details.</div>`;
+  return `<div class="sect"><h4>Radios entered by hand <span class="sub"><button class="mini" data-man-edit="-1">Add</button></span></h4>${rows}</div>`;
+}
+
 function renderUSC(u) {
   if (!u.links.length)
-    return `<div class="sect"><h4>Remote radios</h4><div class="empty">No RSC address configured. Open Settings and add the address of the PC running the RSC.</div></div>`;
+    return (u.manual.length ? "" : `<div class="sect"><h4>Remote radios</h4><div class="empty">No RSC address configured. Open Settings and add the address of the PC running the RSC, or add a radio by hand below.</div></div>`)
+      + renderManual(u);
+  return renderLinks(u) + renderManual(u);
+}
+
+function renderLinks(u) {
   return u.links.map(l => {
     const dot = l.state === "connected" ? "on" : l.state === "connecting" ? "busy" : "bad";
     const sub = l.state === "connected" ? `connected ${esc(l.since)}, ${plural(l.packets, "packet")}`
@@ -217,10 +274,13 @@ function renderHead(s) {
   }
   if (w.usc) {
     const up = w.usc.links.filter(l => l.state === "connected").length;
-    const n = new Set(w.usc.links.flatMap(l => l.radios.filter(x => x.advertised).map(x => x.radio.serial))).size;
-    ok = ok && w.usc.links.length > 0 && up === w.usc.links.length;
+    const byHand = w.usc.manual.filter(x => x.advertised).map(x => x.radio.serial);
+    const n = new Set(w.usc.links.flatMap(l => l.radios.filter(x => x.advertised).map(x => x.radio.serial)).concat(byHand)).size;
+    ok = ok && (w.usc.links.length > 0 || w.usc.manual.length > 0) && up === w.usc.links.length;
     any = any || n > 0;
-    parts.push(`Advertising ${plural(n, "radio")} from ${up} of ${plural(w.usc.links.length, "RSC")}`);
+    parts.push(`Advertising ${plural(n, "radio")}`
+      + (w.usc.links.length ? ` from ${up} of ${plural(w.usc.links.length, "RSC")}` : "")
+      + (byHand.length ? ` (${byHand.length} entered by hand)` : ""));
   }
   const role = { rsc: "Radio Subnet Client (RSC)", usc: "User Subnet Client (USC)", both: "RSC + USC" }[w.role] || "";
   $("headTxt").innerHTML = `<b>${role}</b><br>${parts.join("<br>")}`;
@@ -239,6 +299,46 @@ $("main").addEventListener("change", e => {
   if (d.serial) call("SetExported", d.serial, e.target.checked).then(refresh);
   if (d.adv) call("SetAdvertised", d.adv, e.target.checked).then(refresh);
 });
+$("main").addEventListener("click", e => {
+  const d = e.target.dataset || {};
+  if (d.manEdit !== undefined) openManual(parseInt(d.manEdit, 10));
+  if (d.manDel !== undefined) {
+    // First click arms the button, a second within a few seconds removes.
+    const i = parseInt(d.manDel, 10);
+    clearTimeout(delTimer);
+    if (delArmed === i) {
+      delArmed = -1;
+      call("RemoveManual", i).then(refresh);
+    } else {
+      delArmed = i;
+      delTimer = setTimeout(() => { delArmed = -1; onStatus(status); }, 4000);
+    }
+    setTimeout(() => onStatus(status), 0);
+  }
+});
+
+// ---------- radios entered by hand ----------
+const MAN = { mIP: "ip", mSerial: "serial", mModel: "model", mVersion: "version", mNick: "nickname", mCall: "callsign", mLic: "license_id" };
+let manIndex = -1, delArmed = -1, delTimer = 0;
+function openManual(i) {
+  manIndex = i;
+  const r = i < 0 ? {} : status.wedge.usc.manual[i].radio;
+  for (const id in MAN) $(id).value = r[MAN[id]] || "";
+  $("manTitle").textContent = i < 0 ? "Add a radio by hand" : "Edit radio";
+  $("mErr").textContent = "";
+  open("manDlg");
+  $("mIP").focus();
+}
+$("btnManCancel").onclick = () => close("manDlg");
+$("btnManSave").onclick = async () => {
+  const r = {};
+  for (const id in MAN) r[MAN[id]] = $(id).value.trim();
+  try {
+    await api().SaveManual(manIndex, r);
+    close("manDlg");
+    refresh();
+  } catch (e) { $("mErr").textContent = String(e).replace(/^Error: /, ""); }
+};
 
 // ---------- settings ----------
 function showRoleGroups() {
